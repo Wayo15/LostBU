@@ -1,0 +1,7 @@
+{
+  "name": "findu-fe",
+  "version": "1.0.0",
+  "description": "FindU frontend",
+  "private": true,
+  "type": "module"
+}

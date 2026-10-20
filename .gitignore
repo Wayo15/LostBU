@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Environment files with secrets (never commit these)
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+
+# Local data files (SQLite / JSON database)
+BE/data/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
