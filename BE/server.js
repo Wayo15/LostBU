@@ -4,6 +4,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const itemsRouter = require("./routes/items");
+const { UPLOAD_DIR } = require("./utils/uploads");
 const { notFoundHandler, errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
@@ -11,6 +12,15 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors({ origin: process.env.CORS_ORIGIN }));
 app.use(express.json());
+
+// Serve uploaded images at /uploads/<file name>
+app.use(
+  "/uploads",
+  express.static(UPLOAD_DIR, {
+    index: false, // no directory listing
+    setHeaders: (res) => res.set("X-Content-Type-Options", "nosniff"),
+  })
+);
 
 app.get("/api/health", (req, res) => {
   res.json({

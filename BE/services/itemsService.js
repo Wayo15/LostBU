@@ -6,6 +6,9 @@ const {
   TYPES, STATUSES, CATEGORIES, STATUS_TRANSITIONS,
   validateNewItem, validateItemUpdate,
 } = require("../utils/validators");
+const { hasImageSignature, removeUploadedFile, removeStoredImage } = require("../utils/uploads");
+
+const BAD_IMAGE_MESSAGE = "File is not a valid JPG, PNG or WebP image";
 
 // Trim text fields before saving
 function cleanText(data) {
@@ -60,56 +63,80 @@ function getItem(rawId) {
   return item;
 }
 
-function createItem(body) {
-  const errors = validateNewItem(body);
-  if (Object.keys(errors).length > 0) {
-    throw new AppError(400, "Validation failed", errors);
+// "file" is the image saved by multer (or undefined when no image was sent).
+// If anything fails, the saved file is deleted so no junk is left on disk.
+function createItem(body, file) {
+  try {
+    const errors = validateNewItem(body);
+    if (file && !hasImageSignature(file.path)) errors.image = BAD_IMAGE_MESSAGE;
+    if (Object.keys(errors).length > 0) {
+      throw new AppError(400, "Validation failed", errors);
+    }
+
+    const data = cleanText(body);
+    // status is decided by the server; imageUrl comes only from an uploaded file,
+    // never from text sent by the client.
+    return itemModel.create({
+      type: data.type,
+      status: data.type,
+      name: data.name,
+      category: data.category,
+      description: data.description,
+      location: data.location,
+      eventDate: data.eventDate,
+      contact: data.contact,
+      imageUrl: file ? `/uploads/${file.filename}` : null,
+    });
+  } catch (error) {
+    removeUploadedFile(file);
+    throw error;
   }
-  const data = cleanText(body);
-  // status is decided by the server, never trusted from the client
-  return itemModel.create({
-    type: data.type,
-    status: data.type,
-    name: data.name,
-    category: data.category,
-    description: data.description,
-    location: data.location,
-    eventDate: data.eventDate,
-    contact: data.contact,
-    imageUrl: data.imageUrl || null,
-  });
 }
 
-function updateItem(rawId, body) {
-  const id = parseId(rawId);
-  const existing = itemModel.findById(id);
-  if (!existing) throw new AppError(404, "Item not found");
+function updateItem(rawId, body, file) {
+  try {
+    const id = parseId(rawId);
+    const existing = itemModel.findById(id);
+    if (!existing) throw new AppError(404, "Item not found");
 
-  const errors = validateItemUpdate(body);
-  if (Object.keys(errors).length > 0) {
-    throw new AppError(400, "Validation failed", errors);
-  }
-
-  const data = cleanText(body);
-
-  // Business rule: check the status transition
-  if (data.status !== undefined && data.status !== existing.status) {
-    const allowed = STATUS_TRANSITIONS[existing.type][existing.status];
-    if (!allowed.includes(data.status)) {
-      throw new AppError(400, `Cannot change status from ${existing.status} to ${data.status}`, {
-        status: `A ${existing.type} item with status ${existing.status} can only change to: ${
-          allowed.length ? allowed.join(", ") : "nothing (final status)"
-        }`,
-      });
+    const errors = validateItemUpdate(body);
+    if (file && !hasImageSignature(file.path)) errors.image = BAD_IMAGE_MESSAGE;
+    if (Object.keys(errors).length > 0) {
+      throw new AppError(400, "Validation failed", errors);
     }
-  }
 
-  return itemModel.update(id, data);
+    const data = cleanText(body);
+
+    // Business rule: check the status transition
+    if (data.status !== undefined && data.status !== existing.status) {
+      const allowed = STATUS_TRANSITIONS[existing.type][existing.status];
+      if (!allowed.includes(data.status)) {
+        throw new AppError(400, `Cannot change status from ${existing.status} to ${data.status}`, {
+          status: `A ${existing.type} item with status ${existing.status} can only change to: ${
+            allowed.length ? allowed.join(", ") : "nothing (final status)"
+          }`,
+        });
+      }
+    }
+
+    delete data.imageUrl; // clients cannot set an arbitrary image URL
+    if (file) data.imageUrl = `/uploads/${file.filename}`;
+
+    const updated = itemModel.update(id, data);
+    if (file) removeStoredImage(existing.imageUrl); // old image is no longer needed
+    return updated;
+  } catch (error) {
+    removeUploadedFile(file);
+    throw error;
+  }
 }
 
 function deleteItem(rawId) {
-  const removed = itemModel.remove(parseId(rawId));
-  if (!removed) throw new AppError(404, "Item not found");
+  const id = parseId(rawId);
+  const item = itemModel.findById(id);
+  if (!item) throw new AppError(404, "Item not found");
+  itemModel.remove(id);
+  removeStoredImage(item.imageUrl);
 }
 
 function getStatusCounts() {

@@ -22,7 +22,8 @@ function getItemById(req, res, next) {
 
 function createItem(req, res, next) {
   try {
-    const item = itemsService.createItem(req.body);
+    // req.file exists only when multer received an image
+    const item = itemsService.createItem(req.body, req.file);
     res.status(201).json({ success: true, data: item, message: "Item reported successfully" });
   } catch (error) {
     next(error);
@@ -31,7 +32,7 @@ function createItem(req, res, next) {
 
 function updateItem(req, res, next) {
   try {
-    const item = itemsService.updateItem(req.params.id, req.body);
+    const item = itemsService.updateItem(req.params.id, req.body, req.file);
     res.json({ success: true, data: item, message: "Item updated successfully" });
   } catch (error) {
     next(error);

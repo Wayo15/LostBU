@@ -1,5 +1,6 @@
 const express = require("express");
 const controller = require("../controllers/itemsController");
+const { uploadImage } = require("../utils/uploads");
 
 const router = express.Router();
 
@@ -9,8 +10,10 @@ router.get("/stats", controller.getStats);
 
 router.get("/", controller.getItems);
 router.get("/:id", controller.getItemById);
-router.post("/", controller.createItem);
-router.put("/:id", controller.updateItem);
+
+// uploadImage runs first: it reads multipart data (and skips plain JSON requests)
+router.post("/", uploadImage, controller.createItem);
+router.put("/:id", uploadImage, controller.updateItem);
 router.delete("/:id", controller.deleteItem);
 
 module.exports = router;

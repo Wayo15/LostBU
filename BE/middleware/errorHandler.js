@@ -22,6 +22,20 @@ function errorHandler(error, req, res, next) {
     return res.status(400).json({ success: false, message: "Request body is not valid JSON" });
   }
 
+  // Errors from multer (file upload)
+  if (error.name === "MulterError") {
+    const messages = {
+      LIMIT_FILE_SIZE: "Image must be 2 MB or smaller",
+      LIMIT_UNEXPECTED_FILE: 'Send only one file, in a field named "image"',
+      LIMIT_FILE_COUNT: "Only one image can be uploaded",
+    };
+    return res.status(400).json({
+      success: false,
+      message: "Validation failed",
+      errors: { image: messages[error.code] || "Image upload failed" },
+    });
+  }
+
   if (error instanceof AppError) {
     const body = { success: false, message: error.message };
     if (error.errors) body.errors = error.errors;

@@ -20,3 +20,7 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 .vscode/
+
+
+# Uploaded images (user data, not source code)
+BE/uploads/
