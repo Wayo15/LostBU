@@ -6,7 +6,9 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "test:model": "node scripts/testModel.js"
+
   },
   "dependencies": {
     "cors": "^2.8.6",
