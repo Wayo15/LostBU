@@ -1,5 +1,6 @@
 import { getItems, getStats } from "./js/api.js";
 import { itemCard, statCard, loadingState, emptyState, errorState } from "./js/components.js";
+import { openReportForm, setOnSuccess } from "./js/form.js";
 
 const statsElement = document.getElementById("stats");
 const listElement = document.getElementById("item-list");
@@ -7,12 +8,20 @@ const countElement = document.getElementById("result-count");
 const filtersForm = document.getElementById("filters");
 const searchInput = document.getElementById("filter-search");
 const clearButton = document.getElementById("clear-filters");
+const toastElement = document.getElementById("toast");
 
 const SEARCH_DELAY_MS = 300;
 let searchTimer = null;
+let toastTimer = null;
 let latestRequestId = 0; // used to ignore responses that arrive too late
 
-// Read the current value of every filter control
+function showToast(message) {
+  toastElement.textContent = message;
+  toastElement.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (toastElement.hidden = true), 5000);
+}
+
 function readFilters() {
   const data = new FormData(filtersForm);
   return {
@@ -24,7 +33,6 @@ function readFilters() {
   };
 }
 
-// true when the user has narrowed the list in any way (sort does not count)
 function hasActiveFilters(filters) {
   return Boolean(filters.search || filters.category || filters.type || filters.status);
 }
@@ -50,8 +58,6 @@ async function loadItems() {
 
   try {
     const items = await getItems(filters);
-
-    // A newer request was started while we waited: drop this old answer
     if (requestId !== latestRequestId) return;
 
     if (items.length === 0) {
@@ -62,7 +68,7 @@ async function loadItems() {
             "Try a different keyword or remove some filters.",
             '<button class="btn btn--secondary" type="button" data-action="clear">Clear filters</button>'
           )
-        : emptyState("No items yet", "Reports will appear here once they are submitted.");
+        : emptyState("No items yet", "Be the first to report a lost or found item.");
       return;
     }
 
@@ -80,20 +86,25 @@ function clearFilters() {
   loadItems();
 }
 
+// After a report is saved: clear filters so the new item is visible, refresh everything
+setOnSuccess((item) => {
+  filtersForm.reset();
+  loadStats();
+  loadItems();
+  showToast(`"${item.name}" was reported as ${item.type.toLowerCase()}. Thank you!`);
+});
+
 // ---- Events ----
 
-// Typing: wait until the user pauses, then search (debounce)
 searchInput.addEventListener("input", () => {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(loadItems, SEARCH_DELAY_MS);
 });
 
-// Dropdowns: search immediately when changed
 filtersForm.addEventListener("change", (event) => {
   if (event.target !== searchInput) loadItems();
 });
 
-// Pressing Enter in the search box must not reload the page
 filtersForm.addEventListener("submit", (event) => {
   event.preventDefault();
   clearTimeout(searchTimer);
@@ -102,8 +113,10 @@ filtersForm.addEventListener("submit", (event) => {
 
 clearButton.addEventListener("click", clearFilters);
 
-// Buttons created dynamically (event delegation)
 document.addEventListener("click", (event) => {
+  const reportButton = event.target.closest("[data-report]");
+  if (reportButton) openReportForm(reportButton.dataset.report);
+
   if (event.target.closest('[data-action="retry"]')) {
     loadStats();
     loadItems();

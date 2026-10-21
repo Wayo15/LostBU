@@ -8,8 +8,12 @@
   </head>
   <body>
     <header class="site-header">
-      <div class="container">
+      <div class="container site-header__inner">
         <h1 class="logo">Lost<span>BU</span></h1>
+        <div class="header-actions">
+          <button type="button" class="btn btn--accent" data-report="Lost">Report lost item</button>
+          <button type="button" class="btn btn--outline-light" data-report="Found">Report found item</button>
+        </div>
       </div>
     </header>
 
@@ -17,6 +21,10 @@
       <div class="container">
         <h2>Lost something on campus? Found something?</h2>
         <p>LostBU brings lost and found reports into one organized place, so belongings find their way back to their owners.</p>
+        <div class="hero__actions">
+          <button type="button" class="btn btn--accent" data-report="Lost">I lost something</button>
+          <button type="button" class="btn btn--outline-light" data-report="Found">I found something</button>
+        </div>
       </div>
     </section>
 
@@ -86,6 +94,89 @@
         <div class="item-grid" id="item-list" aria-live="polite"></div>
       </section>
     </main>
+
+    <!-- Report form (modal) -->
+    <dialog id="report-dialog" class="dialog" aria-labelledby="report-title">
+      <form id="report-form" novalidate>
+        <div class="dialog__header">
+          <h2 id="report-title">Report an item</h2>
+          <button type="button" class="dialog__close" id="report-close" aria-label="Close form">&times;</button>
+        </div>
+
+        <input type="hidden" name="type" id="report-type" value="Lost" />
+
+        <p class="notice">
+          <strong>Privacy:</strong> never post ID card numbers, full student IDs, bank or phone numbers in the description.
+          Use the contact field only for a way to reach you (e.g. a LINE ID or university email).
+        </p>
+
+        <div class="form-grid">
+          <div class="field field--full">
+            <label for="report-name">Item name <span class="req" aria-hidden="true">*</span></label>
+            <input type="text" id="report-name" name="name" maxlength="100" required aria-describedby="error-name" />
+            <p class="field-error" id="error-name" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <label for="report-category">Category <span class="req" aria-hidden="true">*</span></label>
+            <select id="report-category" name="category" required aria-describedby="error-category">
+              <option value="">Choose a category</option>
+              <option>ID Cards</option>
+              <option>Wallets</option>
+              <option>Keys</option>
+              <option>Electronics</option>
+              <option>Accessories</option>
+              <option>Bottles</option>
+              <option>Bags</option>
+              <option>Other</option>
+            </select>
+            <p class="field-error" id="error-category" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <label for="report-date"><span id="label-date">Date</span> <span class="req" aria-hidden="true">*</span></label>
+            <input type="date" id="report-date" name="eventDate" required aria-describedby="error-eventDate" />
+            <p class="field-error" id="error-eventDate" role="alert"></p>
+          </div>
+
+          <div class="field field--full">
+            <label for="report-description">Description <span class="req" aria-hidden="true">*</span></label>
+            <textarea id="report-description" name="description" rows="4" maxlength="1000" required aria-describedby="help-description error-description"></textarea>
+            <p class="help" id="help-description"></p>
+            <p class="field-error" id="error-description" role="alert"></p>
+          </div>
+
+          <div class="field field--full">
+            <label for="report-location"><span id="label-location">Location</span> <span class="req" aria-hidden="true">*</span></label>
+            <input type="text" id="report-location" name="location" maxlength="150" required aria-describedby="error-location" />
+            <p class="field-error" id="error-location" role="alert"></p>
+          </div>
+
+          <div class="field field--full">
+            <label for="report-contact">Contact method <span class="req" aria-hidden="true">*</span></label>
+            <input type="text" id="report-contact" name="contact" maxlength="200" placeholder="e.g. LINE: your_id, or name@university.ac.th" required aria-describedby="error-contact" />
+            <p class="field-error" id="error-contact" role="alert"></p>
+          </div>
+
+          <div class="field field--full">
+            <label for="report-image">Photo (optional)</label>
+            <input type="file" id="report-image" name="image" accept="image/jpeg,image/png,image/webp" aria-describedby="help-image error-image" />
+            <p class="help" id="help-image">JPG, PNG or WebP, up to 2 MB.</p>
+            <p class="field-error" id="error-image" role="alert"></p>
+            <div class="image-preview" id="image-preview" hidden></div>
+          </div>
+        </div>
+
+        <p class="field-error field-error--form" id="form-error" role="alert"></p>
+
+        <div class="dialog__footer">
+          <button type="button" class="btn btn--secondary" id="report-cancel">Cancel</button>
+          <button type="submit" class="btn btn--primary" id="report-submit">Submit report</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
     <script type="module" src="/src/main.js"></script>
   </body>

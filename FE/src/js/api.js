@@ -1,13 +1,10 @@
 // All communication with the backend lives in this file.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 async function request(path, options = {}) {
   let response;
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
-      headers: { "Content-Type": "application/json" },
-      ...options,
-    });
+    response = await fetch(`${API_BASE_URL}${path}`, options);
   } catch (networkError) {
     throw new Error(`Cannot reach the server. Is the backend running on ${API_BASE_URL}?`);
   }
@@ -21,7 +18,7 @@ async function request(path, options = {}) {
 
   if (!response.ok) {
     const error = new Error(data.message || "Request failed");
-    error.fieldErrors = data.errors || {}; // used by forms in a later step
+    error.fieldErrors = data.errors || {}; // shown next to form fields
     throw error;
   }
   return data;
@@ -45,4 +42,16 @@ export async function getItems(filters = {}) {
 export async function getStats() {
   const result = await request("/api/items/stats");
   return result.data;
+}
+
+// formData: a FormData object (text fields + optional "image" file).
+// Do NOT set Content-Type: the browser adds it with the multipart boundary.
+export async function createItem(formData) {
+  const result = await request("/api/items", { method: "POST", body: formData });
+  return result.data;
+}
+
+// The database stores a path like "/uploads/abc.png". Turn it into a full URL.
+export function imageSrc(imageUrl) {
+  return imageUrl ? `${API_BASE_URL}${imageUrl}` : null;
 }
