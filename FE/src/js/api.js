@@ -55,3 +55,28 @@ export async function createItem(formData) {
 export function imageSrc(imageUrl) {
   return imageUrl ? `${API_BASE_URL}${imageUrl}` : null;
 }
+
+export async function getItem(id) {
+  const result = await request(`/api/items/${id}`);
+  return result.data;
+}
+
+// formData: a FormData object (used by the edit form, may include a new image)
+export async function updateItem(id, formData) {
+  const result = await request(`/api/items/${id}`, { method: "PUT", body: formData });
+  return result.data;
+}
+
+// Change only the status (sent as JSON)
+export async function updateStatus(id, status) {
+  const result = await request(`/api/items/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+  return result.data;
+}
+
+export async function deleteItem(id) {
+  await request(`/api/items/${id}`, { method: "DELETE" });
+}

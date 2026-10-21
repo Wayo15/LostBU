@@ -1,8 +1,9 @@
-// Report form (modal): open/close, validation, image preview and submit.
-import { createItem } from "./api.js";
+// Report form (modal): create a report or edit an existing one.
+import { createItem, updateItem, imageSrc } from "./api.js";
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const IMAGE_HELP = "JPG, PNG or WebP, up to 2 MB.";
 
 const dialog = document.getElementById("report-dialog");
 const form = document.getElementById("report-form");
@@ -11,14 +12,15 @@ const typeInput = document.getElementById("report-type");
 const locationLabel = document.getElementById("label-location");
 const dateLabel = document.getElementById("label-date");
 const descriptionHelp = document.getElementById("help-description");
+const imageHelp = document.getElementById("help-image");
 const imageInput = document.getElementById("report-image");
 const previewBox = document.getElementById("image-preview");
 const formError = document.getElementById("form-error");
 const submitButton = document.getElementById("report-submit");
 
 const FIELDS = ["name", "category", "description", "location", "eventDate", "contact", "image"];
+const EDITABLE_TEXT_FIELDS = ["name", "category", "description", "location", "eventDate", "contact"];
 
-// Texts that change between "lost" and "found" reports
 const COPY = {
   Lost: {
     title: "Report a lost item",
@@ -37,7 +39,11 @@ const COPY = {
 };
 
 let previewUrl = null;
-let onSuccess = () => {};
+let editingId = null; // null = creating a new report
+let onCreated = () => {};
+let onEdited = () => {};
+
+const today = () => new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD, local time
 
 // ---------- Errors ----------
 
@@ -56,10 +62,18 @@ function clearErrors() {
 // ---------- Image preview ----------
 
 function clearPreview() {
-  if (previewUrl) URL.revokeObjectURL(previewUrl); // free the temporary URL
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
   previewUrl = null;
   previewBox.innerHTML = "";
   previewBox.hidden = true;
+}
+
+function showPreview(src, alt) {
+  const img = document.createElement("img");
+  img.src = src;
+  img.alt = alt;
+  previewBox.appendChild(img);
+  previewBox.hidden = false;
 }
 
 function checkImage(file) {
@@ -75,16 +89,12 @@ imageInput.addEventListener("change", () => {
   const error = checkImage(file);
   setFieldError("image", error);
   if (error) {
-    imageInput.value = ""; // reject the file
+    imageInput.value = "";
     return;
   }
   if (file) {
     previewUrl = URL.createObjectURL(file);
-    const img = document.createElement("img");
-    img.src = previewUrl;
-    img.alt = "Preview of the selected image";
-    previewBox.appendChild(img);
-    previewBox.hidden = false;
+    showPreview(previewUrl, "Preview of the selected image");
   }
 });
 
@@ -101,7 +111,6 @@ function textError(value, label, min, max) {
 function validate() {
   const data = new FormData(form);
   const errors = {};
-  const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD in local time
 
   errors.name = textError(String(data.get("name")), "Name", 2, 100);
   errors.category = data.get("category") ? "" : "Please choose a category";
@@ -111,7 +120,7 @@ function validate() {
 
   const date = String(data.get("eventDate"));
   if (!date) errors.eventDate = "Date is required";
-  else if (date > today) errors.eventDate = "Date cannot be in the future";
+  else if (date > today()) errors.eventDate = "Date cannot be in the future";
 
   errors.image = checkImage(imageInput.files[0]);
 
@@ -123,33 +132,49 @@ function validate() {
 
 // ---------- Open / close ----------
 
-export function openReportForm(type) {
+// Reset the form and set the texts that depend on Lost/Found
+function prepare(type) {
   const copy = COPY[type];
   form.reset();
   clearErrors();
   clearPreview();
   typeInput.value = type;
-  titleEl.textContent = copy.title;
   locationLabel.textContent = copy.location;
   dateLabel.textContent = copy.date;
   descriptionHelp.textContent = copy.description;
+  form.elements.eventDate.max = today();
+  return copy;
+}
+
+export function openReportForm(type) {
+  editingId = null;
+  const copy = prepare(type);
+  titleEl.textContent = copy.title;
   submitButton.textContent = copy.submit;
-  form.elements.eventDate.max = new Date().toLocaleDateString("en-CA");
+  imageHelp.textContent = IMAGE_HELP;
   dialog.showModal();
 }
 
-function closeForm() {
-  dialog.close();
+export function openEditForm(item) {
+  editingId = item.id;
+  prepare(item.type);
+  titleEl.textContent = "Edit report";
+  submitButton.textContent = "Save changes";
+  imageHelp.textContent = `${IMAGE_HELP} Leave empty to keep the current photo.`;
+  EDITABLE_TEXT_FIELDS.forEach((field) => {
+    form.elements[field].value = item[field];
+  });
+  if (item.imageUrl) showPreview(imageSrc(item.imageUrl), "Current photo");
+  dialog.showModal();
 }
 
 dialog.addEventListener("close", clearPreview);
 
-// Click on the dark backdrop closes the dialog
 dialog.addEventListener("click", (event) => {
-  if (event.target === dialog) closeForm();
+  if (event.target === dialog) dialog.close(); // click on the dark backdrop
 });
-document.getElementById("report-cancel").addEventListener("click", closeForm);
-document.getElementById("report-close").addEventListener("click", closeForm);
+document.getElementById("report-cancel").addEventListener("click", () => dialog.close());
+document.getElementById("report-close").addEventListener("click", () => dialog.close());
 
 // ---------- Submit ----------
 
@@ -158,16 +183,17 @@ form.addEventListener("submit", async (event) => {
   formError.textContent = "";
   if (!validate()) return;
 
+  const wasEditing = editingId !== null;
   const originalText = submitButton.textContent;
-  submitButton.disabled = true; // prevents double submit
-  submitButton.textContent = "Submitting...";
+  submitButton.disabled = true;
+  submitButton.textContent = wasEditing ? "Saving..." : "Submitting...";
 
   try {
-    const created = await createItem(new FormData(form));
+    const formData = new FormData(form);
+    const result = wasEditing ? await updateItem(editingId, formData) : await createItem(formData);
     dialog.close();
-    onSuccess(created);
+    (wasEditing ? onEdited : onCreated)(result);
   } catch (error) {
-    // Show field errors returned by the backend next to their fields
     const fieldErrors = error.fieldErrors || {};
     let shown = false;
     for (const [field, message] of Object.entries(fieldErrors)) {
@@ -183,7 +209,10 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
-// main.js registers what should happen after a successful submit
 export function setOnSuccess(callback) {
-  onSuccess = callback;
+  onCreated = callback;
+}
+
+export function setOnEdited(callback) {
+  onEdited = callback;
 }

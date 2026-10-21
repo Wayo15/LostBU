@@ -97,8 +97,7 @@
 
     <!-- Report form (modal) -->
     <dialog id="report-dialog" class="dialog" aria-labelledby="report-title">
-      <form id="report-form" novalidate>
-        <div class="dialog__header">
+      <form id="report-form" class="dialog__content" novalidate>        <div class="dialog__header">
           <h2 id="report-title">Report an item</h2>
           <button type="button" class="dialog__close" id="report-close" aria-label="Close form">&times;</button>
         </div>
@@ -176,6 +175,30 @@
       </form>
     </dialog>
 
+        <!-- Item details (modal) -->
+    <dialog id="detail-dialog" class="dialog" aria-labelledby="detail-title">
+      <div class="dialog__content">
+        <div id="detail-body"></div>
+        <p class="field-error field-error--form" id="detail-error" role="alert"></p>
+        <div class="detail__actions" id="detail-actions"></div>
+        <div class="dialog__footer">
+          <button type="button" class="btn btn--secondary" id="detail-close">Back to list</button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Confirmation (modal) -->
+    <dialog id="confirm-dialog" class="dialog dialog--small" aria-labelledby="confirm-title">
+      <form method="dialog" class="dialog__content">
+        <h2 id="confirm-title"></h2>
+        <p id="confirm-message"></p>
+        <div class="dialog__footer">
+          <button value="cancel" class="btn btn--secondary">Cancel</button>
+          <button value="confirm" class="btn btn--primary" id="confirm-ok">Confirm</button>
+        </div>
+      </form>
+    </dialog>
+    
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
     <script type="module" src="/src/main.js"></script>

@@ -1,6 +1,7 @@
 import { getItems, getStats } from "./js/api.js";
 import { itemCard, statCard, loadingState, emptyState, errorState } from "./js/components.js";
 import { openReportForm, setOnSuccess } from "./js/form.js";
+import { openDetails, setOnChange } from "./js/details.js";
 
 const statsElement = document.getElementById("stats");
 const listElement = document.getElementById("item-list");
@@ -13,7 +14,7 @@ const toastElement = document.getElementById("toast");
 const SEARCH_DELAY_MS = 300;
 let searchTimer = null;
 let toastTimer = null;
-let latestRequestId = 0; // used to ignore responses that arrive too late
+let latestRequestId = 0;
 
 function showToast(message) {
   toastElement.textContent = message;
@@ -86,12 +87,19 @@ function clearFilters() {
   loadItems();
 }
 
-// After a report is saved: clear filters so the new item is visible, refresh everything
+// New report: clear filters so the new item is visible
 setOnSuccess((item) => {
   filtersForm.reset();
   loadStats();
   loadItems();
   showToast(`"${item.name}" was reported as ${item.type.toLowerCase()}. Thank you!`);
+});
+
+// Status change, edit or delete: refresh but KEEP the user's filters
+setOnChange((message) => {
+  loadStats();
+  loadItems();
+  showToast(message);
 });
 
 // ---- Events ----
@@ -116,6 +124,9 @@ clearButton.addEventListener("click", clearFilters);
 document.addEventListener("click", (event) => {
   const reportButton = event.target.closest("[data-report]");
   if (reportButton) openReportForm(reportButton.dataset.report);
+
+  const itemButton = event.target.closest("[data-item-id]");
+  if (itemButton) openDetails(itemButton.dataset.itemId);
 
   if (event.target.closest('[data-action="retry"]')) {
     loadStats();

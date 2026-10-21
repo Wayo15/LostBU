@@ -272,3 +272,51 @@ input:hover, textarea:hover { border-color: var(--color-muted); }
   .header-actions .btn { flex: 1 1 0; padding-inline: 0.5rem; font-size: var(--text-sm); }
   .hero__actions .btn { flex: 1 1 100%; }
 }
+
+/* ===== Dialog padding: padding lives inside, so clicks on it do not close the dialog ===== */
+.dialog { padding: 0; }
+.dialog__content { padding: var(--space-4); }
+.dialog--small { width: min(440px, calc(100% - 2rem)); }
+.dialog--small h2 { font-size: var(--text-lg); margin-bottom: var(--space-2); }
+
+/* ===== More button styles ===== */
+.btn--success { background: var(--color-found); color: #fff; }
+.btn--success:hover { background: #09563f; }
+.btn--danger { background: var(--color-lost); color: #fff; }
+.btn--danger:hover { background: #8f1d14; }
+
+/* ===== Clickable item card ===== */
+.item-card { position: relative; cursor: pointer; transition: border-color 0.15s; }
+.item-card:hover { border-color: var(--color-primary); }
+.item-card__link {
+  background: none; border: 0; padding: 0; margin: 0;
+  font: inherit; color: inherit; text-align: left; cursor: pointer;
+}
+.item-card__link::after { content: ""; position: absolute; inset: 0; } /* whole card is clickable */
+.item-card__link:focus-visible { outline: none; }
+.item-card:has(.item-card__link:focus-visible) { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+
+/* ===== Detail dialog ===== */
+.detail__image {
+  width: 100%; max-height: 320px; object-fit: cover; display: block;
+  border-radius: var(--radius-sm); margin-bottom: var(--space-3); background: var(--color-bg);
+}
+.detail__image--empty {
+  display: flex; align-items: center; justify-content: center; height: 140px;
+  color: var(--color-muted); border: 1px dashed var(--color-border);
+}
+.detail__badges { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2); }
+.detail__title { font-size: var(--text-xl); }
+.detail__desc { margin: var(--space-3) 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.detail__meta { margin: 0 0 var(--space-3); border-top: 1px solid var(--color-border); }
+.detail__meta div { display: flex; gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+.detail__meta dt { color: var(--color-muted); min-width: 9rem; }
+.detail__meta dd { margin: 0; overflow-wrap: anywhere; }
+.detail__actions { margin-top: var(--space-3); }
+.detail__hint { margin-bottom: var(--space-2); }
+.detail__buttons { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+@media (max-width: 640px) {
+  .detail__meta div { flex-direction: column; gap: 0; }
+  .detail__buttons .btn { flex: 1 1 100%; }
+}
