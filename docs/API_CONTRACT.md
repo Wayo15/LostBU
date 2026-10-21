@@ -6,6 +6,7 @@ Base URL (development): `http://localhost:5000`
 
 ```json
 { "success": true, "data": {}, "message": "..." }
+{ "success": true, "data": [], "count": 0 }
 { "success": false, "message": "...", "errors": { "name": "Name is required" } }
 ```
 
@@ -38,6 +39,7 @@ Base URL (development): `http://localhost:5000`
 |---|---|---|---|---|
 | GET | /api/health | Server check | 200 | - |
 | GET | /api/items | List items (filterable) | 200 | - |
+| GET | /api/items/stats | Count of items per status (for dashboard cards) | 200 | - |
 | GET | /api/items/:id | Get one item | 200 | 404 |
 | POST | /api/items | Create a report | 201 | 400 |
 | PUT | /api/items/:id | Update info or status | 200 | 400, 404 |

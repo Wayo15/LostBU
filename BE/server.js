@@ -3,15 +3,15 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const itemsRouter = require("./routes/items");
+const { notFoundHandler, errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware: runs on every request before it reaches a route
-app.use(cors({ origin: process.env.CORS_ORIGIN })); // allow the frontend to call us
-app.use(express.json()); // read JSON bodies sent by the frontend
+app.use(cors({ origin: process.env.CORS_ORIGIN }));
+app.use(express.json());
 
-// Health-check: proves the server is alive
 app.get("/api/health", (req, res) => {
   res.json({
     success: true,
@@ -19,6 +19,12 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+app.use("/api/items", itemsRouter);
+
+// These two must be LAST: unknown URLs first, then error handling
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`API server running at http://localhost:${PORT}`);
