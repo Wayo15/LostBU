@@ -22,16 +22,68 @@
 
     <main class="container">
       <section aria-label="Summary">
-        <div class="stats" id="stats">
-          <!-- filled by main.js -->
-        </div>
+        <div class="stats" id="stats"></div>
       </section>
 
       <section class="section" aria-labelledby="recent-title">
-        <h2 class="section__title" id="recent-title">Recently reported</h2>
-        <div class="item-grid" id="item-list" aria-live="polite">
-          <!-- filled by main.js -->
-        </div>
+        <h2 class="section__title" id="recent-title">Browse items</h2>
+
+        <form class="filters" id="filters" role="search" aria-label="Search and filter items">
+          <div class="field field--search">
+            <label for="filter-search">Search</label>
+            <input type="search" id="filter-search" name="search" placeholder="e.g. wallet, keys, earbuds" autocomplete="off" />
+          </div>
+
+          <div class="field">
+            <label for="filter-category">Category</label>
+            <select id="filter-category" name="category">
+              <option value="">All categories</option>
+              <option>ID Cards</option>
+              <option>Wallets</option>
+              <option>Keys</option>
+              <option>Electronics</option>
+              <option>Accessories</option>
+              <option>Bottles</option>
+              <option>Bags</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="filter-type">Reported as</label>
+            <select id="filter-type" name="type">
+              <option value="">Lost &amp; Found</option>
+              <option value="Lost">Lost</option>
+              <option value="Found">Found</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="filter-status">Current status</label>
+            <select id="filter-status" name="status">
+              <option value="">Any status</option>
+              <option value="Lost">Lost</option>
+              <option value="Found">Found</option>
+              <option value="Returned">Returned</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="filter-sort">Sort by</label>
+            <select id="filter-sort" name="sort">
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+            </select>
+          </div>
+
+          <div class="field field--action">
+            <button type="button" class="btn btn--secondary" id="clear-filters">Clear filters</button>
+          </div>
+        </form>
+
+        <p class="result-count" id="result-count" aria-live="polite"></p>
+
+        <div class="item-grid" id="item-list" aria-live="polite"></div>
       </section>
     </main>
 

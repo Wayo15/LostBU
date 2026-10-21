@@ -49,8 +49,9 @@ export function loadingState(message = "Loading...") {
   return `<div class="state" role="status"><div class="spinner" aria-hidden="true"></div><p>${escapeHtml(message)}</p></div>`;
 }
 
-export function emptyState(title, message) {
-  return `<div class="state"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(message)}</p></div>`;
+// actionHtml is trusted HTML written by us (never user input), e.g. a button.
+export function emptyState(title, message, actionHtml = "") {
+  return `<div class="state"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(message)}</p>${actionHtml}</div>`;
 }
 
 export function errorState(message) {
